@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Контролер Гроубоксу</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+		
+		.active-power {
+        font-weight: bold;
+        color: green; /* Або інший колір, що вам подобається */
+		}
+        
+		    #power-status span { /* Стилі для обох span */
+        padding: 5px 10px;
+        border-radius: 5px;
+        transition: all 0.3s ease; /* Плавний перехід */
+    }
+
+    #power-status .active-power {
+        font-weight: bold;
+        color: green;
+        background-color: #e6ffe6; /* Світло-зелений фон */
+    }
+
+    #power-status .inactive-power {
+        color: gray;
+        background-color: #f2f2f2; /* Світло-сірий фон */
+    }
+		
+		
+        body {
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .block {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #1a73e8;
+            margin-bottom: 15px;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .status-item {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .status-item.on {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-item.off {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        
+        input[type="number"],
+        input[type="time"] {
+            width: 100px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        input[type="range"] {
+            width: 200px;
+        }
+        
+        button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #1557b0;
+        }
+        
+        .error {
+            color: #dc3545;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .success {
+            color: #28a745;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Блок статусу -->
+        <div class="block" id="status-block">
+            <h2>Поточний стан</h2>
+<div class="status-item">
+    <strong>Стан живлення:</strong>
+    <span id="power-status">
+        <span id="main-power-status" class="active-power">Основне</span> / <span id="backup-power-status">Резервне</span>
+    </span>
+</div>
+            <div class="status-grid">
+                <div class="status-item" id="datetime">
+                    <strong>Дата та час</strong>
+                    <div id="current-time">-</div>
+                </div>
+                <div class="status-item" id="temp-humidity">
+                    <strong>Температура і вологість</strong>
+                    <div id="current-temp">-°C</div>
+                    <div id="current-humidity">-%</div>
+                </div>
+                <div class="status-item" id="light1-status">
+                    <strong>Лінія 1</strong>
+                    <div>-</div>
+                </div>
+                <div class="status-item" id="light2-status">
+                    <strong>Лінія 2</strong>
+                    <div>-</div>
+                </div>
+                <div class="status-item" id="light3-status">
+                    <strong>Лінія 3</strong>
+                    <div>-</div>
+                </div>
+                <div class="status-item" id="heater-status">
+                    <strong>Обігрівач</strong>
+                    <div>-</div>
+                </div>
+                <div class="status-item" id="humidifier-status">
+                    <strong>Зволожувач</strong>
+                    <div>-</div>
+                </div>
+                <div class="status-item" id="vent-status">
+                    <strong>Вентилятор провітрювання</strong>
+                    <div>-</div>
+                </div>
+				
+				<div class="status-item" id="outside-fan-rpm">
+					<strong>Вентилятор з вулиці (RPM)</strong>
+					<div id="current-outside-fan-rpm">-</div>
+				</div>
+				<div class="status-item" id="vent-fan-rpm">
+					<strong>Вентилятор провітрювання (RPM)</strong>
+					<div id="current-vent-fan-rpm">-</div>
+				</div>
+				
+            </div>
+        </div>
+
+        <!-- Блок налаштування освітлення -->
+        <div class="block" id="lighting-block">
+            <h2>Налаштування освітлення</h2>
+            <div class="form-group">
+                <div class="form-row">
+                    <strong>Лінія 1:</strong>
+                    <label>Увімкнути:</label>
+                    <input type="time" id="light1-on">
+                    <label>Вимкнути:</label>
+                    <input type="time" id="light1-off">
+                </div>
+                <div class="form-row">
+                    <strong>Лінія 2:</strong>
+                    <label>Увімкнути:</label>
+                    <input type="time" id="light2-on">
+                    <label>Вимкнути:</label>
+                    <input type="time" id="light2-off">
+                </div>
+                <div class="form-row">
+                    <strong>Лінія 3:</strong>
+                    <label>Увімкнути:</label>
+                    <input type="time" id="light3-on">
+                    <label>Вимкнути:</label>
+                    <input type="time" id="light3-off">
+                </div>
+                <button onclick="saveLightingSettings()">Зберегти налаштування освітлення</button>
+            </div>
+        </div>
+
+        <!-- Блок налаштування температури та вологості -->
+        <div class="block" id="climate-block">
+            <h2>Налаштування клімату</h2>
+            <div class="form-group">
+                <h3>Температура</h3>
+                <div class="form-row">
+                    <label>Мінімальна (°C):</label>
+                    <input type="number" id="temp-min" step="0.1">
+                    <label>Максимальна (°C):</label>
+                    <input type="number" id="temp-max" step="0.1">
+                    <label>Критична (°C):</label>
+                    <input type="number" id="temp-critical" step="0.1">
+                </div>
+            </div>
+            <div class="form-group">
+                <h3>Вологість</h3>
+                <div class="form-row">
+                    <label>Мінімальна (%):</label>
+                    <input type="number" id="humidity-min" step="1">
+                    <label>Максимальна (%):</label>
+                    <input type="number" id="humidity-max" step="1">
+                    <label>Критична (%):</label>
+                    <input type="number" id="humidity-critical" step="1">
+                </div>
+                <button onclick="saveClimateSettings()">Зберегти налаштування клімату</button>
+            </div>
+        </div>
+
+        <!-- Блок налаштування вентиляції -->
+        <div class="block" id="ventilation-block">
+            <h2>Налаштування вентиляції</h2>
+            <div class="form-group">
+                <h3>Вентилятор обдуву</h3>
+                <div class="form-row">
+                    <label>Швидкість (%):
+                        <input type="range" id="fan-speed" min="0" max="100" step="1">
+                        <span id="fan-speed-value">50</span>%
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <h3>Вентилятор провітрювання</h3>
+				
+				<div class="form-row">
+					<label>Швидкість під час роботи (%):</label>
+					<input type="number" id="vent-on-speed" min="0" max="100" step="1">
+				</div>
+				<div class="form-row">
+					<label>Швидкість під час паузи (%):</label>
+					<input type="number" id="vent-off-speed" min="0" max="100" step="1">
+				</div>
+				
+                <div class="form-row">
+                    <label>Час роботи (хв):</label>
+                    <input type="number" id="vent-on" min="1">
+                    <label>Час паузи (хв):</label>
+                    <input type="number" id="vent-off" min="1">
+                </div>
+                <button onclick="saveVentilationSettings()">Зберегти налаштування вентиляції</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Функції перевірки коректності введених даних
+        function validateTimeRange(start, end) {
+            return start && end;
+        }
+
+        function validateTemperature(min, max, critical) {
+            return min < max && max < critical && min >= 0 && critical <= 50;
+        }
+
+        function validateHumidity(min, max, critical) {
+            return min < max && max < critical && min >= 0 && critical <= 100;
+        }
+
+        function validateVentilation(onTime, offTime) {
+            return onTime > 0 && offTime > 0;
+        }
+
+        // Функція оновлення статусу
+        function updateStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('current-time').textContent = data.time;
+                    document.getElementById('current-temp').textContent = `${data.temperature.toFixed(1)}°C`;
+                    document.getElementById('current-humidity').textContent = `${data.humidity.toFixed(1)}%`;
+                    
+                    updateStatusItem('light1-status', data.light1);
+                    updateStatusItem('light2-status', data.light2);
+                    updateStatusItem('light3-status', data.light3);
+                    updateStatusItem('heater-status', data.heater);
+                    updateStatusItem('humidifier-status', data.humidifier);
+                    updateStatusItem('vent-status', data.vent);
+                    
+                    document.getElementById('fan-speed').value = data.fan_speed;
+                    document.getElementById('fan-speed-value').textContent = data.fan_speed;
+					document.getElementById('current-outside-fan-rpm').textContent = `${data.outside_fan_rpm.toFixed(0)}`;
+					document.getElementById('current-vent-fan-rpm').textContent = `${data.vent_fan_rpm.toFixed(0)}`;
+					
+            const mainPowerStatus = document.getElementById('main-power-status');
+            const backupPowerStatus = document.getElementById('backup-power-status');
+
+            if (data.is_backup_power) {
+                mainPowerStatus.classList.remove('active-power');
+                mainPowerStatus.classList.add('inactive-power');
+                backupPowerStatus.classList.remove('inactive-power');
+                backupPowerStatus.classList.add('active-power');
+            } else {
+                backupPowerStatus.classList.remove('active-power');
+                backupPowerStatus.classList.add('inactive-power');
+                mainPowerStatus.classList.remove('inactive-power');
+                mainPowerStatus.classList.add('active-power');
+            }
+					
+                })
+                .catch(error => console.error('Помилка оновлення статусу:', error));
+        }
+
+        function updateStatusItem(id, state) {
+            const element = document.getElementById(id);
+            element.classList.remove('on', 'off');
+			element.classList.add(state ? 'on' : 'off');
+            element.querySelector('div').textContent = state ? 'Увімкнено' : 'Вимкнено';
+        }
+
+        // Функція завантаження налаштувань
+        function loadSettings() {
+            fetch('/settings')
+                .then(response => response.json())
+                .then(data => {
+                    // Налаштування освітлення
+                    document.getElementById('light1-on').value = 
+                        `${String(data.light1_on_hour).padStart(2, '0')}:${String(data.light1_on_minute).padStart(2, '0')}`;
+                    document.getElementById('light1-off').value = 
+                        `${String(data.light1_off_hour).padStart(2, '0')}:${String(data.light1_off_minute).padStart(2, '0')}`;
+                    
+                    document.getElementById('light2-on').value = 
+                        `${String(data.light2_on_hour).padStart(2, '0')}:${String(data.light2_on_minute).padStart(2, '0')}`;
+                    document.getElementById('light2-off').value = 
+                        `${String(data.light2_off_hour).padStart(2, '0')}:${String(data.light2_off_minute).padStart(2, '0')}`;
+                    
+                    document.getElementById('light3-on').value = 
+                        `${String(data.light3_on_hour).padStart(2, '0')}:${String(data.light3_on_minute).padStart(2, '0')}`;
+                    document.getElementById('light3-off').value = 
+                        `${String(data.light3_off_hour).padStart(2, '0')}:${String(data.light3_off_minute).padStart(2, '0')}`;
+                    
+                    // Налаштування температури
+                    document.getElementById('temp-min').value = data.temp_min;
+                    document.getElementById('temp-max').value = data.temp_max;
+                    document.getElementById('temp-critical').value = data.temp_critical;
+                    
+                    // Налаштування вологості
+                    document.getElementById('humidity-min').value = data.humidity_min;
+                    document.getElementById('humidity-max').value = data.humidity_max;
+                    document.getElementById('humidity-critical').value = data.humidity_critical;
+                    
+                    // Налаштування вентиляції		
+					document.getElementById('vent-on').value = data.vent_on_minutes;
+					document.getElementById('vent-off').value = data.vent_off_minutes;
+					document.getElementById('vent-on-speed').value = data.vent_on_speed;
+					document.getElementById('vent-off-speed').value = data.vent_off_speed;
+					document.getElementById('fan-speed').value = data.fan_speed;
+					document.getElementById('fan-speed-value').textContent = data.fan_speed;
+
+					
+					
+                })
+                .catch(error => console.error('Помилка завантаження налаштувань:', error));
+        }
+
+        // Функції збереження налаштувань
+        function saveLightingSettings() {
+            const light1On = document.getElementById('light1-on').value.split(':');
+            const light1Off = document.getElementById('light1-off').value.split(':');
+            const light2On = document.getElementById('light2-on').value.split(':');
+            const light2Off = document.getElementById('light2-off').value.split(':');
+            const light3On = document.getElementById('light3-on').value.split(':');
+            const light3Off = document.getElementById('light3-off').value.split(':');
+            
+            if (!validateTimeRange(light1On, light1Off) || 
+                !validateTimeRange(light2On, light2Off) || 
+                !validateTimeRange(light3On, light3Off)) {
+                alert('Будь ласка, перевірте правильність введення часу');
+                return;
+            }
+            
+            const settings = {
+                light1_on_hour: parseInt(light1On[0]),
+                light1_on_minute: parseInt(light1On[1]),
+                light1_off_hour: parseInt(light1Off[0]),
+                light1_off_minute: parseInt(light1Off[1]),
+                light2_on_hour: parseInt(light2On[0]),
+                light2_on_minute: parseInt(light2On[1]),
+                light2_off_hour: parseInt(light2Off[0]),
+                light2_off_minute: parseInt(light2Off[1]),
+                light3_on_hour: parseInt(light3On[0]),
+                light3_on_minute: parseInt(light3On[1]),
+                light3_off_hour: parseInt(light3Off[0]),
+                light3_off_minute: parseInt(light3Off[1])
+            };
+            
+            updateSettings(settings);
+        }
+
+        function saveClimateSettings() {
+            const tempMin = parseFloat(document.getElementById('temp-min').value);
+            const tempMax = parseFloat(document.getElementById('temp-max').value);
+            const tempCritical = parseFloat(document.getElementById('temp-critical').value);
+            const humidityMin = parseFloat(document.getElementById('humidity-min').value);
+            const humidityMax = parseFloat(document.getElementById('humidity-max').value);
+            const humidityCritical = parseFloat(document.getElementById('humidity-critical').value);
+            
+            if (!validateTemperature(tempMin, tempMax, tempCritical)) {
+                alert('Будь ласка, перевірте правильність введення температури');
+                return;
+            }
+            
+            if (!validateHumidity(humidityMin, humidityMax, humidityCritical)) {
+                alert('Будь ласка, перевірте правильність введення вологості');
+                return;
+            }
+            
+            const settings = {
+                temp_min: tempMin,
+                temp_max: tempMax,
+                temp_critical: tempCritical,
+                humidity_min: humidityMin,
+                humidity_max: humidityMax,
+                humidity_critical: humidityCritical
+            };
+            
+            updateSettings(settings);
+        }
+
+function saveVentilationSettings() {
+    const ventOn = parseInt(document.getElementById('vent-on').value);
+    const ventOff = parseInt(document.getElementById('vent-off').value);
+    const ventOnSpeed = parseInt(document.getElementById('vent-on-speed').value); // Додано
+    const ventOffSpeed = parseInt(document.getElementById('vent-off-speed').value); // Додано
+    const fanSpeed = parseInt(document.getElementById('fan-speed').value);
+
+    if (!validateVentilation(ventOn, ventOff)) {
+        alert('Будь ласка, перевірте правильність введення часу вентиляції');
+        return;
+    }
+
+    const settings = {
+        vent_on_minutes: ventOn,
+        vent_off_minutes: ventOff,
+        vent_on_speed: ventOnSpeed, // Додано
+        vent_off_speed: ventOffSpeed, // Додано
+        fan_speed: fanSpeed
+    };
+
+    updateSettings(settings);
+}
+
+        // Функція оновлення налаштувань на сервері
+        function updateSettings(settings) {
+            fetch('/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Налаштування успішно збережено');
+                } else {
+                    alert('Помилка збереження налаштувань');
+                }
+            })
+            .catch(error => {
+                console.error('Помилка:', error);
+                alert('Помилка збереження налаштувань');
+            });
+        }
+
+        // Оновлення значення повзунка швидкості вентилятора
+        document.getElementById('fan-speed').addEventListener('input', function() {
+            document.getElementById('fan-speed-value').textContent = this.value;
+        });
+
+        // Ініціалізація сторінки
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            updateStatus();
+            // Оновлення статусу кожні 2 секунди
+            setInterval(updateStatus, 2000);
+        });
+    </script>
+</body>
+</html>
